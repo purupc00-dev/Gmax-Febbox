@@ -1,4 +1,5 @@
 import express from 'express';
+import fetch from 'node-fetch';
 import cors from 'cors'; // Import cors package
 import ShowboxAPI from './ShowboxAPI.js';
 import FebboxAPI from './FebBoxApi.js';
