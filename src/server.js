@@ -105,6 +105,7 @@ app.get('/api/febbox/files', async (req, res) => {
     }
 });
 
+
 // Get download links
 app.get('/api/febbox/links', async (req, res) => {
     const { shareKey, fid } = req.query;
@@ -116,7 +117,47 @@ app.get('/api/febbox/links', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+// New endpoint to pipe video data and bypass 403 Forbidden
+app.get('/api/download-proxy', async (req, res) => {
+    const { videoUrl } = req.query;
 
+    if (!videoUrl) {
+        return res.status(400).send('Missing videoUrl');
+    }
+
+    try {
+        const videoResponse = await fetch(decodeURIComponent(videoUrl), {
+            headers: { 
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36', 
+                'Referer': 'https://www.febbox.com/' 
+            }
+        });
+
+        if (!videoResponse.ok) {
+            return res.status(videoResponse.status).send('Failed to fetch video stream from source');
+        }
+
+        // Pass along essential headers so the browser knows it's a video file downloading
+        const contentType = videoResponse.headers.get('content-type') || 'video/mp4';
+        res.setHeader('Content-Type', contentType);
+        
+        const contentLength = videoResponse.headers.get('content-length');
+        if (contentLength) {
+            res.setHeader('Content-Length', contentLength);
+        }
+
+        // Extract a basic filename or default to video.mkv
+        const urlParams = new URLSearchParams(videoUrl.split('?')[1]);
+        const fileName = urlParams.get('KEY5') || 'video.mkv';
+        res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+
+        // Stream the file directly to the client
+        videoResponse.body.pipe(res);
+
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
 // Start the server
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
