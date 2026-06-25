@@ -9,8 +9,9 @@ const CONFIG = {
     BASE_URL: 'https://mbpapi.shegu.net/api/api_client/index/',
     APP_KEY: 'moviebox',
     APP_ID: 'com.tdo.showbox',
-    IV: 'wEiphTn!',
-    KEY: '123d6cedf626dy54233aa1w6',
+    // 🔒 SECURITY FIX: Pull keys from environment so they are not leaked on GitHub
+    IV: process.env.SHOWBOX_IV || 'wEiphTn!',
+    KEY: process.env.SHOWBOX_KEY || '123d6cedf626dy54233aa1w6',
     DEFAULTS: {
         CHILD_MODE: process.env.CHILD_MODE || '0',
         APP_VERSION: '11.5',
