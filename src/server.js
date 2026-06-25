@@ -10,27 +10,31 @@ dotenv.config();
 const app = express();
 const port = process.env.API_PORT || 3000;
 
-// 🔒 SECURITY FIX: Only allow your specific Vercel domain to use this API
+// 🔒 SECURITY FIX: Restrict CORS to only your frontend domains
 const allowedOrigins = ['https://gmaxhub.vercel.app', 'http://localhost:3000'];
 app.use(cors({
     origin: function (origin, callback) {
         if (!origin || allowedOrigins.includes(origin)) {
             callback(null, true);
         } else {
-            callback(new Error('Not allowed by CORS security'));
+            callback(new Error('Not allowed by CORS'));
         }
     }
 }));
 
+// Middleware to handle JSON requests
 app.use(express.json());
 
+// Initialize APIs
 const showboxAPI = new ShowboxAPI();
 const febboxAPI = new FebboxAPI();
 
+// Test endpoint
 app.get('/', (req, res) => {
-    res.send('Showbox and Febbox API is securely working!');
+    res.send('Showbox and Febbox API is working!');
 });
 
+// Autocomplete endpoint
 app.get('/api/autocomplete', async (req, res) => {
     const { keyword, pagelimit } = req.query;
     try {
@@ -41,6 +45,7 @@ app.get('/api/autocomplete', async (req, res) => {
     }
 });
 
+// Search endpoint
 app.get('/api/search', async (req, res) => {
     const { type = 'all', title, page = 1, pagelimit = 20 } = req.query;
     try {
@@ -51,6 +56,7 @@ app.get('/api/search', async (req, res) => {
     }
 });
 
+// Movie details
 app.get('/api/movie/:id', async (req, res) => {
     const { id } = req.params;
     try {
@@ -61,6 +67,7 @@ app.get('/api/movie/:id', async (req, res) => {
     }
 });
 
+// Show details
 app.get('/api/show/:id', async (req, res) => {
     const { id } = req.params;
     try {
@@ -71,6 +78,7 @@ app.get('/api/show/:id', async (req, res) => {
     }
 });
 
+// Get FebBox ID
 app.get('/api/febbox/id', async (req, res) => {
     const { id, type } = req.query;
     try {
@@ -81,6 +89,7 @@ app.get('/api/febbox/id', async (req, res) => {
     }
 });
 
+// Get Febbox files
 app.get('/api/febbox/files', async (req, res) => {
     const { shareKey, parent_id = 0 } = req.query;
     const cookie = req.headers['x-auth-cookie'] || null;
@@ -92,12 +101,12 @@ app.get('/api/febbox/files', async (req, res) => {
     }
 });
 
-// 🚀 ZERO-BANDWIDTH FIX: Extract User IP and forward it to Febbox
+// 🚀 ZERO-BANDWIDTH FIX: Extract IP and forward it for direct CDN linking
 app.get('/api/febbox/links', async (req, res) => {
     const { shareKey, fid } = req.query;
     const cookie = req.headers['x-auth-cookie'] || null;
     
-    // Securely grab the user's real IP, not the server's IP
+    // Grab the real user's IP
     let clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
     if (clientIp && clientIp.includes(',')) {
         clientIp = clientIp.split(',')[0].trim();
@@ -111,6 +120,7 @@ app.get('/api/febbox/links', async (req, res) => {
     }
 });
 
+// Start the server
 app.listen(port, () => {
-    console.log(`Server running safely at http://localhost:${port}`);
+    console.log(`Server running at http://localhost:${port}`);
 });
