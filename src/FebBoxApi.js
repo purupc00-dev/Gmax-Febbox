@@ -36,12 +36,18 @@ class FebboxAPI {
         this.headers.referer = `${this.baseUrl}/share/${shareKey}`;
     }
 
-    // Fetch JSON data from a URL
-    async _fetchJson(url, cookie = null) {
+    // Fetch JSON data from a URL (UPDATED TO ACCEPT AND SPOOF IP)
+    async _fetchJson(url, cookie = null, clientIp = null) {
         const headers = {
             ...this.headers,
             ...(cookie ? { cookie: `ui=${cookie}` } : {})
         };
+
+        // If the user's real IP is provided, forward it to Febbox to authorize the CDN link
+        if (clientIp) {
+            headers['X-Forwarded-For'] = clientIp;
+            headers['Client-IP'] = clientIp;
+        }
 
         const response = await fetch(url, { headers });
         if (!response.ok) throw new Error(`Error fetching data from ${url}: ${response.statusText}`);
@@ -57,12 +63,13 @@ class FebboxAPI {
         return data.data.file_list;
     }
 
-    // Get video file qualities and links from a shared video
-    async getLinks(shareKey, fid , cookie = null) {
+    // Get video file qualities and links from a shared video (UPDATED TO PASS IP)
+    async getLinks(shareKey, fid , cookie = null, clientIp = null) {
         const url = `${this.baseUrl}/console/video_quality_list?fid=${fid}`;
         this._setReferer(shareKey);
 
-        const data = await this._fetchJson(url, cookie);
+        // Pass the IP down to the fetch JSON function
+        const data = await this._fetchJson(url, cookie, clientIp);
         const htmlResponse = data.html;
 
         // Parse HTML response and extract file qualities
